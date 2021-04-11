@@ -1,0 +1,17 @@
+{
+    "repositories":[
+        {
+            "type":"git",
+            "url":"https://github.com/novokhatsky/db"
+        }
+    ],
+    "require": {
+        "slim/slim": "3.12.3",
+        "bryanjhv/slim-session": "3.7.0",
+        "slim/php-view": "2.2.1",
+        "novokhatsky/db": "dev-master"
+    },
+    "autoload": {
+        "psr-4": {"Fuel\\": "src/"}
+    }
+}
