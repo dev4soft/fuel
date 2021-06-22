@@ -14,23 +14,18 @@ class Auth
     public function __invoke($request, $response, $next)
     {
         // проверяем наличие сохраненной cookies
-        $id_user = $this->container->cookie->getCookieValue($request, 'id');
+        $id_client = $this->container->cookie->getCookieValue($request, 'id');
         $token = $this->container->cookie->getCookieValue($request, 'token');
 
-        if ($id_user && $token) {
-            // проверим токен
-            // узнаем по id пользователя хэш пароля
-            $ip = $request->getServerParam('REMOTE_ADDR');
+        if ($id_client && $token) {
+            $login = new \Fuel\Models\Login($this->container);
 
-            // заглушка
-            $hash_pass = $this->container->cookie->getCookieValue($request, 'hash_pass');
-
-            if (password_verify($ip . $hash_pass, $token)) {
-                $response = $this->container->cookie->addCookie($response, 'id', $id_user, '10');
+            if ($login->CheckToken($id_client, $token)) {
+                $response = $this->container->cookie->addCookie($response, 'id', $id_client, '10');
                 $response = $this->container->cookie->addCookie($response, 'token', $token, '10');
-                $this->container->session->auth = $id_user;
+                $this->container->session->id_client = $id_client;
             } else {
-                $this->container->session->delete('auth');
+                $this->container->session->delete('id_client');
                 // todo
                 // удалить cookies
             }
@@ -47,15 +42,6 @@ class Auth
 
     public function isAuthorized()
     {
-        return (int)$this->container->session->auth === 1;
+        return (int)$this->container->session->id_client === 1;
     }
-
-    /*
-     * id_user
-     * hash_pass хэш пароля пользователя (из базы)
-     */
-    public function login($id_user, $hash_pass)
-    {
-    }
-
 }
