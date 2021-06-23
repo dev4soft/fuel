@@ -14,34 +14,44 @@ class Auth
     public function __invoke($request, $response, $next)
     {
         // проверяем наличие сохраненной cookies
-        $id_client = $this->container->cookie->getCookieValue($request, 'id');
+        $CookieSet = true;
+        $login = $this->container->cookie->getCookieValue($request, 'login');
         $token = $this->container->cookie->getCookieValue($request, 'token');
 
-        if ($id_client && $token) {
-            $login = new \Fuel\Models\Login($this->container);
-
-            if ($login->CheckToken($id_client, $token)) {
-                $response = $this->container->cookie->addCookie($response, 'id', $id_client, '10');
-                $response = $this->container->cookie->addCookie($response, 'token', $token, '10');
-                $this->container->session->id_client = $id_client;
-            } else {
-                $this->container->session->delete('id_client');
-                // todo
-                // удалить cookies
-            }
+        if (!($login && $token)) {
+            $CookieSet = false;
+            // если нет в куках, посмотрим в сессии
+            $login = $this->container->session->login;
+            $token = $this->container->session->token;
         }
 
-        if ($this->isAuthorized()) {
-            $response = $next($request, $response);
+        if ($login && $token) {
+            $validator = new \Fuel\Models\Login($this->container, $login);
 
-            return $response;
+            if ($validator->CheckToken($token)) {
+                // данные в сессии обновляются всегда
+                $this->container->session->login = $login;
+                $this->container->session->token = $token;
+
+                if ($CookieSet) {
+                    // cookie обновляется только если они существовали
+                    $response = $this->container->cookie->addCookie($response, 'login', $login, '10');
+                    $response = $this->container->cookie->addCookie($response, 'token', $token, '10');
+                }
+
+                // передаем дальше
+                $response = $next($request, $response);
+
+                return $response;
+            }
+
+            $this->container->session->delete('login');
+            $this->container->session->delete('token');
+
+            // todo
+            // удалить cookies
         }
 
         return $response->withRedirect('/login');
-    }
-
-    public function isAuthorized()
-    {
-        return (int)$this->container->session->id_client === 1;
     }
 }

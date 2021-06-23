@@ -7,56 +7,53 @@ Class Login
     private $container;
     public $id_client;
     public $hash;
+    public $login;
 
-    public function __construct($c)
+    public function __construct($c, $login)
     {
         $this->container = $c;
-    }
-
-    public function CheckPass($login, $pass)
-    {
 
         $query = 'select id_client, hash from clients where login = :login';
 
-        $idClientHash = $this
-            ->container
-            ->db
-            ->getRow($query, ['login' => $login]);
-        
-        if (!$idClientHash) {
-            return false;
-        }
-
-        if (!password_verify($pass, $idClientHash['hash'])) {
-            return false;
-        }
-
-        $this->id_client = $idClientHash['id_client'];
-        $this->hash = $idClientHash['hash'];
-
-        return true;
-    }
-
-    public function CheckToken($id_client, $token)
-    {
-        $query = 'select login, hash from clients where id_client = :id_client';
         $userInfo = $this
             ->container
             ->db
-            ->getRow($query, ['id_client' => $id_client]);
+            ->getRow($query, ['login' => $login]);
 
-        if (!$userInfo) {
-            return false;
+        if ($userInfo) {
+            $this->id_client = $userInfo['id_client'];
+            $this->hash = $userInfo['hash'];
+            $this->login = $login;
+        } else {
+            $this->id_client = '';
+            $this->hash = '';
+            $this->login = '';
         }
+    }
 
-        if (!password_verify($id_client . $userInfo['hash'], $token)) {
-            return false;
+    public function CheckPass($pass)
+    {
+        return password_verify($pass, $this->hash);
+    }
+
+    public function CheckToken($token)
+    {
+        return password_verify($this->login . $this->hash, $token);
+    }
+
+    public function UpdatePass($pass)
+    {
+        $hash = password_hash($pass, PASSWORD_BCRYPT);
+        $query = 'update clients set hash = :hash where login = :login';
+
+        $result = $this
+            ->container
+            ->db
+            ->updateData($query, ['login' => $this->login, 'hash' => $hash]);
+
+        if ($result) {
+            $this->hash = $hash;
         }
-
-        $this->id_client = $id_client;
-        $this->hash = $userInfo['hash'];
-
-        return true;
     }
 }
 
