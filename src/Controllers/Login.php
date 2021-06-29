@@ -36,7 +36,6 @@ Class Login
             $remember = isset($data['remember']) ? $data['remember'] : false;
             
             if ($remember) {
-
                 $response = $this->container->cookie->addCookie($response, 'login', $login, '10');
                 $response = $this->container->cookie->addCookie($response, 'token', $token, '10');
             }

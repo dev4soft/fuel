@@ -11,6 +11,29 @@ class Auth
         $this->container = $c;
     }
 
+    private function getLoginToken(&$login, &$token, &$cookieIsSet)
+    {
+        // проверяем наличие сохраненной cookies
+        $cookieIsSet = true;
+        $login = $this->container->cookie->getCookieValue($request, 'login');
+        $token = $this->container->cookie->getCookieValue($request, 'token');
+
+        if (($login && $token)) {
+            return true;
+        }
+
+        $cookieIsSet = false;
+        // если нет в куках, посмотрим в сессии
+        $login = $this->container->session->login;
+        $token = $this->container->session->token;
+
+        if (($login && $token)) {
+            return true;
+        }
+
+        return false;
+    }
+
     public function __invoke($request, $response, $next)
     {
         // проверяем наличие сохраненной cookies
@@ -48,8 +71,8 @@ class Auth
             $this->container->session->delete('login');
             $this->container->session->delete('token');
 
-            // todo
-            // удалить cookies
+            $response = $this->container->cookie->deleteCookie($response, 'login');
+            $response = $this->container->cookie->deleteCookie($response, 'token');
         }
 
         return $response->withRedirect('/login');
