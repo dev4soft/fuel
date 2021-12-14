@@ -14,14 +14,12 @@ Class UserIn
 
     private $session;
     private $cookie;
-    private $db;
     private $user;
 
-    public function __construct($session, $cookie, $db, $user)
+    public function __construct($session, $cookie, $user)
     {
         $this->session = $session;
         $this->cookie = $cookie;
-        $this->db = $db;
         $this->user = $user;
     }
 

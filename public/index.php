@@ -41,7 +41,6 @@ $container['userin'] = function ($container) {
     return new \Fuel\UserIn(
         $container['session'],
         $container['cookie'],
-        $container['db'],
         $container['user']
     );
 };
