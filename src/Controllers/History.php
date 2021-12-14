@@ -4,22 +4,20 @@ namespace Fuel\Controllers;
 
 Class History
 {
-    private $container;
+    private $sales;
+    private $view;
 
-    public function __construct($c)
+    public function __construct($container)
     {
-        $this->container = $c;
+        $this->sales = $container['sales'];
+        $this->view = $container['view'];
     }
 
     public function OutSales($request, $response)
     {
-
-        $sales = new \Fuel\Models\Sales($this->container);
-
-        $data = $sales->LastSales();
+        $data = $this->sales->LastSales();
 
         return $this
-                ->container
                 ->view
                 ->render($response, 'history.php', [
                     'data' => $data,

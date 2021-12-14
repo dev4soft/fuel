@@ -6,16 +6,6 @@ require '../vendor/autoload.php';
 
 $app = new \Slim\App;
 
-$container = $app->getContainer();
-
-$container['view'] = function ($container) {
-    return new \Slim\Views\PhpRenderer('../templates');
-};
-
-$container['db'] = function ($container) {
-    return new \Novokhatsky\Db\DbConnect(new \Fuel\ConfigDb);
-};
-
 $app->add(
     new \Slim\Middleware\Session([
         'autorefresh' => true,
@@ -23,7 +13,19 @@ $app->add(
     ])
 );
 
-$container['session'] = function() {
+$container = $app->getContainer();
+
+$container['configdb'] = require '../config/ConfigDb.php';
+
+$container['view'] = function () {
+    return new \Slim\Views\PhpRenderer('../templates');
+};
+
+$container['db'] = function ($container) {
+    return new \Novokhatsky\DbConnect($container['configdb']);
+};
+
+$container['session'] = function () {
     return new \SlimSession\Helper();
 };
 
@@ -31,16 +33,37 @@ $container['cookie'] = function() {
     return new \Fuel\Cookie;
 };
 
+$container['sales'] = function ($container) {
+    return new \Fuel\Models\Sales($container['db']);
+};
+
+$container['userin'] = function ($container) {
+    return new \Fuel\UserIn(
+        $container['session'],
+        $container['cookie'],
+        $container['db'],
+        $container['user']
+    );
+};
+
+$container['user'] = function ($container) {
+    return new \Fuel\User($container['db']);
+};
+
+$container['auth'] = function ($container) {
+    return new \Fuel\Auth($container['userin']);
+};
+
 $app->group('', function () {
     $this->get('/', '\Fuel\Controllers\Form:OutMenu');
     $this->get('/add', '\Fuel\Controllers\Form:OutForm');
     $this->post('/add', '\Fuel\Controllers\Form:SavePurchase');
     $this->get('/history', '\Fuel\Controllers\History:OutSales');
-    $this->get('/logout', '\Fuel\Controllers\Login:LogOut');
-})->add(new \Fuel\Auth($container));
+    $this->get('/logout', '\Fuel\Controllers\LoginForm:LogOut');
+})->add($container['auth']);
 
-$app->get('/login', '\Fuel\Controllers\Login:LoginForm');
-$app->post('/login', '\Fuel\Controllers\Login:LoginCheck');
+$app->get('/login', '\Fuel\Controllers\LoginForm:LoginForm');
+$app->post('/login', '\Fuel\Controllers\LoginForm:LoginCheck');
 
 $app->run();
 

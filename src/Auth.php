@@ -4,29 +4,27 @@ namespace Fuel;
 
 class Auth 
 {
-    private $container;
+    private $userin;
 
-    public function __construct($c)
+    public function __construct($userin)
     {
-        $this->container = $c;
+        $this->userin = $userin;
     }
 
     public function __invoke($request, $response, $next)
     {
-        $validator = new \Fuel\Login($this->container);
-
         // проверим наличие данных в cookies
-        if ($validator->CheckCookie($request)) {
+        if ($this->userin->CheckCookie($request)) {
             
             // обновим сессию и куки
-            $validator->setSession();
-            $response = $validator->setCookies($response);
+            $this->userin->saveInSession();
+            $response = $this->userin->saveInCookie($response);
 
         // проверим данные в сессии
-        } elseif ($validator->CheckSession()) {
+        } elseif ($this->userin->CheckSession()) {
             
             // обновим только сессию
-            $validator->setSession();
+            $this->userin->saveInSession();
             
         } else {
             // данные не найдены

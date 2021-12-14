@@ -4,11 +4,11 @@ namespace Fuel\Models;
 
 Class Sales
 {
-    private $container;
+    private $db;
 
-    public function __construct($c)
+    public function __construct($db)
     {
-        $this->container = $c;
+        $this->db = $db;
     }
 
     public function LastSales()
@@ -16,7 +16,6 @@ Class Sales
         $query = 'select dt, amount from purchase order by dt desc, id_purchase desc limit 10';
 
         return $this
-                ->container
                 ->db
                 ->getList($query);
     }
@@ -26,7 +25,6 @@ Class Sales
         $query = 'select price from purchase where id_type = 1 order by dt desc limit 1';
 
         $last_price = $this
-                        ->container
                         ->db
                         ->getValue($query);
 
@@ -36,7 +34,6 @@ Class Sales
     public function AddPurchase($purchase)
     {
         $this
-            ->container
             ->db
             ->beginTransaction();
 
@@ -45,7 +42,6 @@ Class Sales
         $query = 'insert into purchase (dt, amount) values (:dt, :amount)';
 
         $res = $this
-                    ->container
                     ->db
                     ->insertData($query, ['dt' => $purchase['dt'], 'amount' => $purchase['amount']]);
 
@@ -56,7 +52,6 @@ Class Sales
             $query = 'insert into trips (dt, litre, distance, price) values (:dt, :litre, :distance, :price)';
 
             $res = $this
-                        ->container
                         ->db
                         ->insertData($query,
                             [
@@ -71,13 +66,11 @@ Class Sales
 
         if ($flag_error) {
             $this
-                ->container
                 ->db
                 ->rollBack();
 
         } else {
             $this
-                ->container
                 ->db
                 ->commit();
 
